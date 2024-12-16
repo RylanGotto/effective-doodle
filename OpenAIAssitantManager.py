@@ -189,16 +189,15 @@ class OpenAIAssistantManager:
         self, url: str, payload: Dict[str, Any], method: str = "POST"
     ) -> Dict[str, Any]:
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                if method.upper() == "POST":
-                    response = await client.post(
-                        url, json=payload, headers=self.headers
-                    )
-                else:
-                    response = await client.get(url, headers=self.headers)
+            if method.upper() == "POST":
+                response = await self.client.post(
+                    url, json=payload, headers=self.headers
+                )
+            else:
+                response = await self.client.get(url, headers=self.headers)
 
-                response.raise_for_status()
-                return response.json()
+            response.raise_for_status()
+            return response
         except (RequestError, HTTPStatusError) as e:
             logger.error(f"Request error to {url}: {e}")
             raise
@@ -211,18 +210,16 @@ class OpenAIAssistantManager:
         :return: Async generator of response tokens
         """
         # Create message in thread
-        msg_response = await self.client.post(
+        msg_response = await self._make_request(
             "{}/threads/{}/messages".format(self.base_url, self._thread_id),
-            json={"role": "user", "content": message},
-            headers=self.headers,
+            {"role": "user", "content": message},
         )
         msg_response.raise_for_status()
 
         # Run thread
-        run_response = await self.client.post(
+        run_response = await self._make_request(
             "{}/threads/{}/runs".format(self.base_url, self._thread_id),
-            json={"assistant_id": self._assistant_id, "stream": True},
-            headers=self.headers,
+            {"assistant_id": self._assistant_id, "stream": True},
         )
         run_response.raise_for_status()
 
@@ -250,8 +247,17 @@ class OpenAIAssistantManager:
                 except json.JSONDecodeError:
                     continue
 
-    async def _create_tool_outputs(self, tool_outputs):
-        pass
+    async def _submit_tools_and_run(self, state):
+        outputs = await self._create_tool_outputs(state)
+
+        run_response = await self._make_request(
+            "{}/threads/{}/runs/{}/submit_tool_outputs".format(
+                self.base_url, self._thread_id, state["run_id"]
+            ),
+            {"tool_outputs": outputs, "stream": True},
+        )
+
+        return run_response
 
     async def _create_tool_outputs(self, state):
         tool_outputs = []
@@ -264,7 +270,7 @@ class OpenAIAssistantManager:
                 "output": await self.tools_manager.invoke(name, query),
             }
             tool_outputs.append(outputs)
-        return self._submit_tools_and_run(self._submit_tools_and_run())
+        return tool_outputs
 
     async def _process_event_data(self, data: dict, state: dict) -> Optional[str]:
         """Process event data from the OpenAI response stream.
@@ -303,7 +309,7 @@ class OpenAIAssistantManager:
             state["function_calls"][state["index"]].get("function")["arguments"] = (
                 json.loads("".join(state["arguments"]))
             )
-            await self._submit_tools_and_run(state)
+            return await self._submit_tools_and_run(state)
 
         else:
             content = data.get("delta", {}).get("content", [])
@@ -324,8 +330,8 @@ class OpenAIAssistantManager:
 
             # Create thread if needed
             if self._thread_id is None:
-                thread_response = await self.client.post(
-                    f"{self.base_url}/threads", headers=self.headers
+                thread_response = await self._make_request(
+                    f"{self.base_url}/threads", {}
                 )
                 thread_response.raise_for_status()
                 self._thread_id = thread_response.json()["id"]
