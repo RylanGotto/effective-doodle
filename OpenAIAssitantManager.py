@@ -21,13 +21,156 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+# Advanced Search Abstraction
+class SearchProvider:
+    """Abstract search provider with advanced error handling and logging."""
+
+    def __init__(self, max_retries: int = 3):
+        self.max_retries = max_retries
+        self.logger = logging.getLogger(self.__class__.__name__)
+
+    async def news(self, query: str) -> List[Dict[str, str]]:
+        """
+        Perform a search with exponential backoff and retry mechanism.
+
+        :param query: Search query string
+        :return: List of search results
+        """
+        for attempt in range(self.max_retries):
+            try:
+                # Mock search implementation - replace with actual search logic
+                results = [
+                    {
+                        "title": f"Result {i} for {query}",
+                        "link": f"https://example.com/search?q={query}&page={i}",
+                        "snippet": f"Sample search result {i} for {query}",
+                    }
+                    for i in range(3)
+                ]
+                return results
+            except Exception as e:
+                wait_time = 2**attempt  # Exponential backoff
+                self.logger.warning(
+                    f"Search attempt {attempt + 1} failed: {e}. Retrying in {wait_time} seconds."
+                )
+                await asyncio.sleep(wait_time)
+
+        self.logger.error(f"Search failed after {self.max_retries} attempts")
+        return []
+
+    async def google(self, query: str) -> List[Dict[str, str]]:
+        """
+        Perform a search with exponential backoff and retry mechanism.
+
+        :param query: Search query string
+        :return: List of search results
+        """
+        for attempt in range(self.max_retries):
+            try:
+                # Mock search implementation - replace with actual search logic
+                results = [
+                    {
+                        "title": f"Result {i} for {query}",
+                        "link": f"https://example.com/search?q={query}&page={i}",
+                        "snippet": f"Sample search result {i} for {query}",
+                    }
+                    for i in range(3)
+                ]
+                return results
+            except Exception as e:
+                wait_time = 2**attempt  # Exponential backoff
+                self.logger.warning(
+                    f"Search attempt {attempt + 1} failed: {e}. Retrying in {wait_time} seconds."
+                )
+                await asyncio.sleep(wait_time)
+
+        self.logger.error(f"Search failed after {self.max_retries} attempts")
+        return []
+
+
+# Advanced Tools Management
+class ToolsManager:
+    """
+    Comprehensive tools management with advanced features:
+    - Centralized tool registration
+    - Detailed logging
+    - Error handling
+    - Performance tracking
+    """
+
+    def __init__(self, search_provider: SearchProvider):
+        self.search_provider = search_provider
+        self._tools = {"news": self._news, "google": self._google}
+        self._tool_calls = {}  # Track tool usage
+        self._lock = Lock()
+
+    async def invoke(self, tool_name: str, query: str) -> str:
+        """
+        Invoke a tool with comprehensive logging and performance tracking.
+
+        :param tool_name: Name of the tool to invoke
+        :param query: Query for the tool
+        :return: Tool execution result
+        """
+        start_time = time.time()
+
+        try:
+            tool = self._tools.get(tool_name)
+            if not tool:
+                raise ValueError(f"Tool {tool_name} not found")
+
+            result = await tool(query)
+
+            # Thread-safe tool call tracking
+            async with self._lock:
+                self._tool_calls[tool_name] = self._tool_calls.get(tool_name, 0) + 1
+
+            return result
+        except Exception as e:
+            logger.error(f"Tool {tool_name} invocation error: {e}")
+            raise
+        finally:
+            duration = time.time() - start_time
+            logger.info(f"Tool {tool_name} execution time: {duration:.4f} seconds")
+
+    async def _news(self, query: str) -> str:
+        """
+        Perform web search with advanced error handling.
+
+        :param query: Search query
+        :return: JSON string of search results
+        """
+        try:
+            results = await self.search_provider.news(query)
+            return json.dumps(results[:3])
+        except Exception as e:
+            logger.error(f"Web search error: {e}")
+            return "[]"
+
+    async def _google(self, query: str) -> str:
+        """
+        Perform web search with advanced error handling.
+
+        :param query: Search query
+        :return: JSON string of search results
+        """
+        try:
+            results = await self.search_provider.news(query)
+            return json.dumps(results[:3])
+        except Exception as e:
+            logger.error(f"Web search error: {e}")
+            return "[]"
+
+
 class OpenAIAssistantManager:
     def __init__(
         self,
+        tools_manager,
     ):
         _api_key = os.getenv("OPENAI_API_KEY")
         self.apy_key = _api_key
         self.model = os.getenv("OPENAI_MODEL")
+        self.tools_manager = tools_manager
 
         self.headers = {
             "Authorization": f"Bearer {_api_key}",
@@ -107,9 +250,21 @@ class OpenAIAssistantManager:
                 except json.JSONDecodeError:
                     continue
 
-    def _submit_tool_outputs_and_run(self, function_calls):
-        for i in function_calls:
-            print(i)
+    async def _create_tool_outputs(self, tool_outputs):
+        pass
+
+    async def _create_tool_outputs(self, state):
+        tool_outputs = []
+        for i in state["function_calls"]:
+            func = i.get("function")
+            name = func.get("name")
+            query = func.get("query")
+            outputs = {
+                "tool_call_id": i.get("id"),
+                "output": await self.tools_manager.invoke(name, query),
+            }
+            tool_outputs.append(outputs)
+        return self._submit_tools_and_run(self._submit_tools_and_run())
 
     async def _process_event_data(self, data: dict, state: dict) -> Optional[str]:
         """Process event data from the OpenAI response stream.
@@ -145,15 +300,15 @@ class OpenAIAssistantManager:
                 )
 
         elif state["event"] == "thread.run.requires_action":
-            state["function_calls"][state["index"]].update(
-                {"arguments": json.loads("".join(state["arguments"]))}
+            state["function_calls"][state["index"]].get("function")["arguments"] = (
+                json.loads("".join(state["arguments"]))
             )
-            self._submit_tool_outputs_and_run(state["function_calls"])
+            await self._submit_tools_and_run(state)
 
         else:
             content = data.get("delta", {}).get("content", [])
             if content:
-                return content[0].get("text", {}).get("value", "")
+                return content[0].get("text").get("value")
 
     @asynccontextmanager
     async def conversation_context(self):
@@ -197,7 +352,9 @@ async def main():
         return
 
     # Initialize components
-    assistant_manager = OpenAIAssistantManager()
+    search_provider = SearchProvider()
+    tools_manager = ToolsManager(search_provider)
+    assistant_manager = OpenAIAssistantManager(tools_manager)
 
     # Interactive conversation loop
     try:
