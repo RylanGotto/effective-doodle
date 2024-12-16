@@ -49,6 +49,7 @@ class Search:
         return (content, url)
 
     def news(self, query):
+        print(query)
         return self.newsapi.get_everything(
             q=query,
             language="en",
@@ -59,6 +60,7 @@ class Search:
         )
 
     def google(self, query) -> dict:
+        print(query)
         params = {
             "q": query,
             "hl": "en",

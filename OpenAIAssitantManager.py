@@ -9,7 +9,9 @@ from typing import Any, AsyncGenerator, Dict, List, Optional
 
 import httpx
 from dotenv import load_dotenv
-from httpx import AsyncClient, HTTPStatusError, RequestError
+from httpx import HTTPStatusError, RequestError
+
+from search import Search
 
 load_dotenv()
 
@@ -21,13 +23,36 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+# Rate Limiting Decorator
+def rate_limit(max_calls: int = 5, period: float = 1.0):
+    """Decorator to limit the rate of function calls."""
+    calls = []
+
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            now = time.time()
+            calls[:] = [c for c in calls if now - c < period]
+
+            if len(calls) >= max_calls:
+                wait_time = period - (now - calls[0])
+                await asyncio.sleep(wait_time)
+
+            calls.append(time.time())
+            return await func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 # Advanced Search Abstraction
 class SearchProvider:
     """Abstract search provider with advanced error handling and logging."""
 
-    def __init__(self, max_retries: int = 3):
+    def __init__(self, max_retries: int = 3, tool_libs={}):
         self.max_retries = max_retries
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.tool_libs = tool_libs
 
     async def news(self, query: str) -> List[Dict[str, str]]:
         """
@@ -38,16 +63,7 @@ class SearchProvider:
         """
         for attempt in range(self.max_retries):
             try:
-                # Mock search implementation - replace with actual search logic
-                results = [
-                    {
-                        "title": f"Result {i} for {query}",
-                        "link": f"https://example.com/search?q={query}&page={i}",
-                        "snippet": f"Sample search result {i} for {query}",
-                    }
-                    for i in range(3)
-                ]
-                return results
+                return self.tool_libs.get("web_search").news(query)
             except Exception as e:
                 wait_time = 2**attempt  # Exponential backoff
                 self.logger.warning(
@@ -67,16 +83,7 @@ class SearchProvider:
         """
         for attempt in range(self.max_retries):
             try:
-                # Mock search implementation - replace with actual search logic
-                results = [
-                    {
-                        "title": f"Result {i} for {query}",
-                        "link": f"https://example.com/search?q={query}&page={i}",
-                        "snippet": f"Sample search result {i} for {query}",
-                    }
-                    for i in range(3)
-                ]
-                return results
+                return self.tool_libs.get("web_search").google(query)
             except Exception as e:
                 wait_time = 2**attempt  # Exponential backoff
                 self.logger.warning(
@@ -113,19 +120,17 @@ class ToolsManager:
         :return: Tool execution result
         """
         start_time = time.time()
-
         try:
+
             tool = self._tools.get(tool_name)
             if not tool:
                 raise ValueError(f"Tool {tool_name} not found")
-
-            result = await tool(query)
 
             # Thread-safe tool call tracking
             async with self._lock:
                 self._tool_calls[tool_name] = self._tool_calls.get(tool_name, 0) + 1
 
-            return result
+            return await tool(query)
         except Exception as e:
             logger.error(f"Tool {tool_name} invocation error: {e}")
             raise
@@ -142,7 +147,8 @@ class ToolsManager:
         """
         try:
             results = await self.search_provider.news(query)
-            return json.dumps(results[:3])
+
+            return results
         except Exception as e:
             logger.error(f"Web search error: {e}")
             return "[]"
@@ -156,7 +162,8 @@ class ToolsManager:
         """
         try:
             results = await self.search_provider.news(query)
-            return json.dumps(results[:3])
+
+            return results
         except Exception as e:
             logger.error(f"Web search error: {e}")
             return "[]"
@@ -167,6 +174,7 @@ class OpenAIAssistantManager:
         self,
         tools_manager,
     ):
+        max_concurrent_requests = 5
         _api_key = os.getenv("OPENAI_API_KEY")
         self.apy_key = _api_key
         self.model = os.getenv("OPENAI_MODEL")
@@ -182,25 +190,31 @@ class OpenAIAssistantManager:
 
         self.base_url = "https://api.openai.com/v1"
 
+        self._request_semaphore = Semaphore(max_concurrent_requests)
+
         self._assistant_id = os.getenv("OPENAI_ASSITANT_ID")
         self._thread_id = None
 
+    @rate_limit(max_calls=10, period=1.0)
     async def _make_request(
         self, url: str, payload: Dict[str, Any], method: str = "POST"
     ) -> Dict[str, Any]:
-        try:
-            if method.upper() == "POST":
-                response = await self.client.post(
-                    url, json=payload, headers=self.headers
-                )
-            else:
-                response = await self.client.get(url, headers=self.headers)
 
-            response.raise_for_status()
-            return response
-        except (RequestError, HTTPStatusError) as e:
-            logger.error(f"Request error to {url}: {e}")
-            raise
+        async with self._request_semaphore:
+            try:
+                if method.upper() == "POST":
+                    response = await self.client.post(
+                        url, json=payload, headers=self.headers
+                    )
+                else:
+                    response = await self.client.get(url, headers=self.headers)
+
+                response.raise_for_status()
+
+                return response
+            except (RequestError, HTTPStatusError) as e:
+                logger.error(f"Request error to {url}: {e}")
+                raise
 
     async def send_message(self, message: str) -> AsyncGenerator[str, None]:
         """
@@ -224,7 +238,7 @@ class OpenAIAssistantManager:
         run_response.raise_for_status()
 
         # Process streaming response
-        text = None
+
         state = {
             "index": 0,
             "function_calls": [],
@@ -232,7 +246,6 @@ class OpenAIAssistantManager:
             "event": None,
             "run_id": 0,
         }
-
         async for line in run_response.aiter_lines():
             if line.startswith("event:"):
                 state["event"] = line[7:]
@@ -258,7 +271,24 @@ class OpenAIAssistantManager:
                 except json.JSONDecodeError:
                     continue
 
-    async def _submit_tools_and_run(self, state):
+    async def _submit_tools_and_run(self, state: Dict[str, Any]) -> httpx.Response:
+        """
+        Submit tool outputs and continue run execution.
+
+        This method submits the outputs from tool calls back to the assistant and continues
+        the run execution.
+
+        Args:
+            state (Dict[str, Any]): A dictionary containing the current run state information, including:
+                - run_id (str): The ID of the current run
+                - tool_calls (List[Dict]): List of tool calls that were executed
+
+        Returns:
+            httpx.Response: The API response containing the updated run information
+
+        Raises:
+            Any exceptions from the underlying API request
+        """
         outputs = await self._create_tool_outputs(state)
 
         run_response = await self._make_request(
@@ -270,17 +300,48 @@ class OpenAIAssistantManager:
 
         return run_response
 
-    async def _create_tool_outputs(self, state):
-        tool_outputs = []
+    async def _create_tool_outputs(
+        self, state: Dict[str, Any]
+    ) -> List[Dict[str, Optional[str]]]:
+        """
+        Processes and executes tool function calls asynchronously.
+
+        This method takes the current state containing function calls, executes them in parallel
+        using the tools manager, and returns their outputs.
+
+        Args:
+            state (Dict[str, Any]): A dictionary containing the current assistant state with function_calls.
+                         Expected format: {"function_calls": [{"id": str, "function": {"name": str, "arguments": {"query": str}}}]}
+
+        Returns:
+            List[Dict[str, Optional[str]]]: A list of dictionaries containing tool outputs in the format:
+                  [{"tool_call_id": str, "output": str}]
+
+        Raises:
+            Any exceptions raised by the tools_manager.invoke() method may propagate.
+        """
+        tool_outputs: List[Dict[str, Optional[str]]] = []
+        tasks: List[Coroutine] = []
+        from pprint import pprint
+
         for i in state["function_calls"]:
-            func = i.get("function")
-            name = func.get("name")
-            query = func.get("query")
-            outputs = {
+            func: Dict[str, Any] = i.get("function")
+            name: str = func.get("name")
+            query: str = func.get("arguments").get("query")
+            outputs: Dict[str, Optional[str]] = {
                 "tool_call_id": i.get("id"),
-                "output": await self.tools_manager.invoke(name, query),
+                "output": None,
             }
+
+            tasks.append(self.tools_manager.invoke(name, query))
             tool_outputs.append(outputs)
+
+        results: List[str] = await asyncio.gather(*tasks)
+
+        # Update outputs with results
+        for output, result in zip(tool_outputs, results):
+            output["output"] = str(result)
+
         return tool_outputs
 
     async def _process_event_data(self, data: dict, state: dict) -> Optional[str]:
@@ -307,9 +368,9 @@ class OpenAIAssistantManager:
                 state["function_calls"].append(tool_call)
                 state["index"] = tool_call.get("index", None)
                 if state["index"] > 0:
-                    state["function_calls"][state["index"] - 1].update(
-                        {"arguments": json.loads("".join(state["arguments"]))}
-                    )
+                    state["function_calls"][state["index"] - 1].get("function")[
+                        "arguments"
+                    ] = json.loads("".join(state["arguments"]))
                     state["arguments"].clear()
             else:
                 state["arguments"].append(
@@ -320,6 +381,7 @@ class OpenAIAssistantManager:
             state["function_calls"][state["index"]].get("function")["arguments"] = (
                 json.loads("".join(state["arguments"]))
             )
+
             return await self._submit_tools_and_run(state)
 
         else:
@@ -358,39 +420,8 @@ class OpenAIAssistantManager:
             self.client = None
 
 
-# Main Execution
-async def main():
-    # Configuration from environment
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        logger.error(
-            "No OpenAI API key found. Set OPENAI_API_KEY environment variable."
-        )
-        return
-
-    # Initialize components
-    search_provider = SearchProvider()
+def _start():
+    search_library = {"web_search": Search()}
+    search_provider = SearchProvider(3, search_library)
     tools_manager = ToolsManager(search_provider)
-    assistant_manager = OpenAIAssistantManager(tools_manager)
-
-    # Interactive conversation loop
-    try:
-        async with assistant_manager.conversation_context() as assistant:
-            while True:
-                try:
-                    user_input = input("\n>>> ")
-                    if user_input.lower() in ["exit", "quit", "q"]:
-                        break
-
-                    async for response_chunk in assistant.send_message(user_input):
-                        await asyncio.sleep(0.045)
-                        print(response_chunk, end="", flush=True)
-
-                except KeyboardInterrupt:
-                    break
-    except Exception as e:
-        logger.error(f"Conversation error: {e}")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    return OpenAIAssistantManager(tools_manager)
