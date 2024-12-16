@@ -240,9 +240,20 @@ class OpenAIAssistantManager:
                 try:
                     data = json.loads(line[5:])
 
-                    text = await self._process_event_data(data, state)
-                    if text:
-                        yield text
+                    response = await self._process_event_data(data, state)
+
+                    if isinstance(response, str):
+                        yield response
+
+                    if isinstance(response, httpx.Response):
+                        async for line in response.aiter_lines():
+                            if line.startswith("event:"):
+                                state["event"] = line[7:]
+                            if line.startswith("data:"):
+                                data = json.loads(line[5:])
+                                response = await self._process_event_data(data, state)
+                                if response:
+                                    yield response
 
                 except json.JSONDecodeError:
                     continue
