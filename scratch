@@ -1,0 +1,644 @@
+event: thread.run.created
+data: {
+    "id": "run_mYwMCnQhzQZqr5A9OdZjcKod",
+    "object": "thread.run",
+    "created_at": 1734320382,
+    "assistant_id": "asst_WQiJkKKXOs4mSC1g4lJiroxQ",
+    "thread_id": "thread_C8T8du6fFHXXyse6EW4gwRk9",
+    "status": "queued",
+    "started_at": null,
+    "expires_at": 1734320982,
+    "cancelled_at": null,
+    "failed_at": null,
+    "completed_at": null,
+    "required_action": null,
+    "last_error": null,
+    "model": "gpt-3.5-turbo-0125",
+    "instructions": "Return all responses in properly formatted markdown\n\n START ALL RESPONSE CONTAINING markdown WITH THE WORDS MARKDOWN OR ANYTHING FROM THE CODE INTERPRETER START WITH THE WORDS MARK DOWN\n\nEXAMPLE UNDERNEATH:\n\nMARKDOWN\n\n### What Donald Trump's Win Will Mean for Big Tech DONE\n\n- **Author:** Lauren Goode, Paresh Dave, Will Knight  DONE\n- **Published by:** Wired  \n- **Date:** November 7, 2024 \n- **Description:** Donald Trump's approach to Big Tech has oscillated between calls for stricter regulations for some players and a hands-off approach for others. Here's how he might steer tech policy in a second term. \n- **Read more:** [Wired](https://www.wired.com/story/trump-tech-policy/) DONE\n\n![Donald Trump Big Tech](https://media.wired.com/photos/672bcd1062c380013856bb0f/191:100/w_1280,c_limit/Business_bigtech_GettyImages-697900116.jpg) ",
+    "tools": [
+        {"type": "code_interpreter"},
+        {
+            "type": "file_search",
+            "file_search": {
+                "ranking_options": {
+                    "ranker": "default_2024_08_21",
+                    "score_threshold": 0.0,
+                }
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "news",
+                "description": "Get news from NewsAPI",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The user query to get news articles about",
+                        }
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "google",
+                "description": "Gets search results from google",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The user query to get infomation from google about",
+                        }
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "wikipeida",
+                "description": "Gets search results from wikipedia",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The user query to get infomation from wikipedia about",
+                        }
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "fetch",
+                "description": "Get the content from a url",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "If the user requests the content of a url or article this function will retrieve the html document",
+                        },
+                        "search_type": {
+                            "type": "string",
+                            "description": "This will indicate where to search for the article. Examples: Wikipedia, google, news",
+                        },
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+    ],
+    "tool_resources": {"code_interpreter": {"file_ids": []}},
+    "metadata": {},
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "max_completion_tokens": null,
+    "max_prompt_tokens": null,
+    "truncation_strategy": {"type": "auto", "last_messages": null},
+    "incomplete_details": null,
+    "usage": null,
+    "response_format": {"type": "text"},
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+}
+
+event: thread.run.queued
+data: {
+    "id": "run_mYwMCnQhzQZqr5A9OdZjcKod",
+    "object": "thread.run",
+    "created_at": 1734320382,
+    "assistant_id": "asst_WQiJkKKXOs4mSC1g4lJiroxQ",
+    "thread_id": "thread_C8T8du6fFHXXyse6EW4gwRk9",
+    "status": "queued",
+    "started_at": null,
+    "expires_at": 1734320982,
+    "cancelled_at": null,
+    "failed_at": null,
+    "completed_at": null,
+    "required_action": null,
+    "last_error": null,
+    "model": "gpt-3.5-turbo-0125",
+    "instructions": "Return all responses in properly formatted markdown\n\n START ALL RESPONSE CONTAINING markdown WITH THE WORDS MARKDOWN OR ANYTHING FROM THE CODE INTERPRETER START WITH THE WORDS MARK DOWN\n\nEXAMPLE UNDERNEATH:\n\nMARKDOWN\n\n### What Donald Trump's Win Will Mean for Big Tech DONE\n\n- **Author:** Lauren Goode, Paresh Dave, Will Knight  DONE\n- **Published by:** Wired  \n- **Date:** November 7, 2024 \n- **Description:** Donald Trump's approach to Big Tech has oscillated between calls for stricter regulations for some players and a hands-off approach for others. Here's how he might steer tech policy in a second term. \n- **Read more:** [Wired](https://www.wired.com/story/trump-tech-policy/) DONE\n\n![Donald Trump Big Tech](https://media.wired.com/photos/672bcd1062c380013856bb0f/191:100/w_1280,c_limit/Business_bigtech_GettyImages-697900116.jpg) ",
+    "tools": [
+        {"type": "code_interpreter"},
+        {
+            "type": "file_search",
+            "file_search": {
+                "ranking_options": {
+                    "ranker": "default_2024_08_21",
+                    "score_threshold": 0.0,
+                }
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "news",
+                "description": "Get news from NewsAPI",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The user query to get news articles about",
+                        }
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "google",
+                "description": "Gets search results from google",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The user query to get infomation from google about",
+                        }
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "wikipeida",
+                "description": "Gets search results from wikipedia",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The user query to get infomation from wikipedia about",
+                        }
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "fetch",
+                "description": "Get the content from a url",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "If the user requests the content of a url or article this function will retrieve the html document",
+                        },
+                        "search_type": {
+                            "type": "string",
+                            "description": "This will indicate where to search for the article. Examples: Wikipedia, google, news",
+                        },
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+    ],
+    "tool_resources": {"code_interpreter": {"file_ids": []}},
+    "metadata": {},
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "max_completion_tokens": null,
+    "max_prompt_tokens": null,
+    "truncation_strategy": {"type": "auto", "last_messages": null},
+    "incomplete_details": null,
+    "usage": null,
+    "response_format": {"type": "text"},
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+}
+
+event: thread.run.in_progress
+data: {
+    "id": "run_mYwMCnQhzQZqr5A9OdZjcKod",
+    "object": "thread.run",
+    "created_at": 1734320382,
+    "assistant_id": "asst_WQiJkKKXOs4mSC1g4lJiroxQ",
+    "thread_id": "thread_C8T8du6fFHXXyse6EW4gwRk9",
+    "status": "in_progress",
+    "started_at": 1734320383,
+    "expires_at": 1734320982,
+    "cancelled_at": null,
+    "failed_at": null,
+    "completed_at": null,
+    "required_action": null,
+    "last_error": null,
+    "model": "gpt-3.5-turbo-0125",
+    "instructions": "Return all responses in properly formatted markdown\n\n START ALL RESPONSE CONTAINING markdown WITH THE WORDS MARKDOWN OR ANYTHING FROM THE CODE INTERPRETER START WITH THE WORDS MARK DOWN\n\nEXAMPLE UNDERNEATH:\n\nMARKDOWN\n\n### What Donald Trump's Win Will Mean for Big Tech DONE\n\n- **Author:** Lauren Goode, Paresh Dave, Will Knight  DONE\n- **Published by:** Wired  \n- **Date:** November 7, 2024 \n- **Description:** Donald Trump's approach to Big Tech has oscillated between calls for stricter regulations for some players and a hands-off approach for others. Here's how he might steer tech policy in a second term. \n- **Read more:** [Wired](https://www.wired.com/story/trump-tech-policy/) DONE\n\n![Donald Trump Big Tech](https://media.wired.com/photos/672bcd1062c380013856bb0f/191:100/w_1280,c_limit/Business_bigtech_GettyImages-697900116.jpg) ",
+    "tools": [
+        {"type": "code_interpreter"},
+        {
+            "type": "file_search",
+            "file_search": {
+                "ranking_options": {
+                    "ranker": "default_2024_08_21",
+                    "score_threshold": 0.0,
+                }
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "news",
+                "description": "Get news from NewsAPI",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The user query to get news articles about",
+                        }
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "google",
+                "description": "Gets search results from google",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The user query to get infomation from google about",
+                        }
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "wikipeida",
+                "description": "Gets search results from wikipedia",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The user query to get infomation from wikipedia about",
+                        }
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "fetch",
+                "description": "Get the content from a url",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "If the user requests the content of a url or article this function will retrieve the html document",
+                        },
+                        "search_type": {
+                            "type": "string",
+                            "description": "This will indicate where to search for the article. Examples: Wikipedia, google, news",
+                        },
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+    ],
+    "tool_resources": {"code_interpreter": {"file_ids": []}},
+    "metadata": {},
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "max_completion_tokens": null,
+    "max_prompt_tokens": null,
+    "truncation_strategy": {"type": "auto", "last_messages": null},
+    "incomplete_details": null,
+    "usage": null,
+    "response_format": {"type": "text"},
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+}
+
+event: thread.run.step.created
+data: {
+    "id": "step_uCFrBwrbxXhfel3mFCKL2mcz",
+    "object": "thread.run.step",
+    "created_at": 1734320384,
+    "run_id": "run_mYwMCnQhzQZqr5A9OdZjcKod",
+    "assistant_id": "asst_WQiJkKKXOs4mSC1g4lJiroxQ",
+    "thread_id": "thread_C8T8du6fFHXXyse6EW4gwRk9",
+    "type": "tool_calls",
+    "status": "in_progress",
+    "cancelled_at": null,
+    "completed_at": null,
+    "expires_at": 1734320982,
+    "failed_at": null,
+    "last_error": null,
+    "step_details": {"type": "tool_calls", "tool_calls": []},
+    "usage": null,
+}
+
+event: thread.run.step.in_progress
+data: {
+    "id": "step_uCFrBwrbxXhfel3mFCKL2mcz",
+    "object": "thread.run.step",
+    "created_at": 1734320384,
+    "run_id": "run_mYwMCnQhzQZqr5A9OdZjcKod",
+    "assistant_id": "asst_WQiJkKKXOs4mSC1g4lJiroxQ",
+    "thread_id": "thread_C8T8du6fFHXXyse6EW4gwRk9",
+    "type": "tool_calls",
+    "status": "in_progress",
+    "cancelled_at": null,
+    "completed_at": null,
+    "expires_at": 1734320982,
+    "failed_at": null,
+    "last_error": null,
+    "step_details": {"type": "tool_calls", "tool_calls": []},
+    "usage": null,
+}
+
+event: thread.run.step.delta
+data: {
+    "id": "step_uCFrBwrbxXhfel3mFCKL2mcz",
+    "object": "thread.run.step.delta",
+    "delta": {
+        "step_details": {
+            "type": "tool_calls",
+            "tool_calls": [
+                {
+                    "index": 0,
+                    "id": "call_Sspq2VsGfhVorhlYx3MSblXU",
+                    "type": "function",
+                    "function": {"name": "news", "arguments": "", "output": null},
+                }
+            ],
+        }
+    },
+}
+
+event: thread.run.step.delta
+data: {
+    "id": "step_uCFrBwrbxXhfel3mFCKL2mcz",
+    "object": "thread.run.step.delta",
+    "delta": {
+        "step_details": {
+            "type": "tool_calls",
+            "tool_calls": [
+                {"index": 0, "type": "function", "function": {"arguments": '{"'}}
+            ],
+        }
+    },
+}
+
+event: thread.run.step.delta
+data: {
+    "id": "step_uCFrBwrbxXhfel3mFCKL2mcz",
+    "object": "thread.run.step.delta",
+    "delta": {
+        "step_details": {
+            "type": "tool_calls",
+            "tool_calls": [
+                {"index": 0, "type": "function", "function": {"arguments": "query"}}
+            ],
+        }
+    },
+}
+
+event: thread.run.step.delta
+data: {
+    "id": "step_uCFrBwrbxXhfel3mFCKL2mcz",
+    "object": "thread.run.step.delta",
+    "delta": {
+        "step_details": {
+            "type": "tool_calls",
+            "tool_calls": [
+                {"index": 0, "type": "function", "function": {"arguments": '":"'}}
+            ],
+        }
+    },
+}
+
+event: thread.run.step.delta
+data: {
+    "id": "step_uCFrBwrbxXhfel3mFCKL2mcz",
+    "object": "thread.run.step.delta",
+    "delta": {
+        "step_details": {
+            "type": "tool_calls",
+            "tool_calls": [
+                {"index": 0, "type": "function", "function": {"arguments": "202"}}
+            ],
+        }
+    },
+}
+
+event: thread.run.step.delta
+data: {
+    "id": "step_uCFrBwrbxXhfel3mFCKL2mcz",
+    "object": "thread.run.step.delta",
+    "delta": {
+        "step_details": {
+            "type": "tool_calls",
+            "tool_calls": [
+                {"index": 0, "type": "function", "function": {"arguments": "4"}}
+            ],
+        }
+    },
+}
+
+event: thread.run.step.delta
+data: {
+    "id": "step_uCFrBwrbxXhfel3mFCKL2mcz",
+    "object": "thread.run.step.delta",
+    "delta": {
+        "step_details": {
+            "type": "tool_calls",
+            "tool_calls": [
+                {"index": 0, "type": "function", "function": {"arguments": " election"}}
+            ],
+        }
+    },
+}
+
+event: thread.run.step.delta
+data: {
+    "id": "step_uCFrBwrbxXhfel3mFCKL2mcz",
+    "object": "thread.run.step.delta",
+    "delta": {
+        "step_details": {
+            "type": "tool_calls",
+            "tool_calls": [
+                {"index": 0, "type": "function", "function": {"arguments": '"}'}}
+            ],
+        }
+    },
+}
+
+event: thread.run.requires_action
+data: {
+    "id": "run_mYwMCnQhzQZqr5A9OdZjcKod",
+    "object": "thread.run",
+    "created_at": 1734320382,
+    "assistant_id": "asst_WQiJkKKXOs4mSC1g4lJiroxQ",
+    "thread_id": "thread_C8T8du6fFHXXyse6EW4gwRk9",
+    "status": "requires_action",
+    "started_at": 1734320383,
+    "expires_at": 1734320982,
+    "cancelled_at": null,
+    "failed_at": null,
+    "completed_at": null,
+    "required_action": {
+        "type": "submit_tool_outputs",
+        "submit_tool_outputs": {
+            "tool_calls": [
+                {
+                    "id": "call_Sspq2VsGfhVorhlYx3MSblXU",
+                    "type": "function",
+                    "function": {
+                        "name": "news",
+                        "arguments": '{"query":"2024 election"}',
+                    },
+                }
+            ]
+        },
+    },
+    "last_error": null,
+    "model": "gpt-3.5-turbo-0125",
+    "instructions": "Return all responses in properly formatted markdown\n\n START ALL RESPONSE CONTAINING markdown WITH THE WORDS MARKDOWN OR ANYTHING FROM THE CODE INTERPRETER START WITH THE WORDS MARK DOWN\n\nEXAMPLE UNDERNEATH:\n\nMARKDOWN\n\n### What Donald Trump's Win Will Mean for Big Tech DONE\n\n- **Author:** Lauren Goode, Paresh Dave, Will Knight  DONE\n- **Published by:** Wired  \n- **Date:** November 7, 2024 \n- **Description:** Donald Trump's approach to Big Tech has oscillated between calls for stricter regulations for some players and a hands-off approach for others. Here's how he might steer tech policy in a second term. \n- **Read more:** [Wired](https://www.wired.com/story/trump-tech-policy/) DONE\n\n![Donald Trump Big Tech](https://media.wired.com/photos/672bcd1062c380013856bb0f/191:100/w_1280,c_limit/Business_bigtech_GettyImages-697900116.jpg) ",
+    "tools": [
+        {"type": "code_interpreter"},
+        {
+            "type": "file_search",
+            "file_search": {
+                "ranking_options": {
+                    "ranker": "default_2024_08_21",
+                    "score_threshold": 0.0,
+                }
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "news",
+                "description": "Get news from NewsAPI",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The user query to get news articles about",
+                        }
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "google",
+                "description": "Gets search results from google",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The user query to get infomation from google about",
+                        }
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "wikipeida",
+                "description": "Gets search results from wikipedia",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The user query to get infomation from wikipedia about",
+                        }
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "fetch",
+                "description": "Get the content from a url",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "If the user requests the content of a url or article this function will retrieve the html document",
+                        },
+                        "search_type": {
+                            "type": "string",
+                            "description": "This will indicate where to search for the article. Examples: Wikipedia, google, news",
+                        },
+                    },
+                    "required": ["query"],
+                },
+                "strict": false,
+            },
+        },
+    ],
+    "tool_resources": {"code_interpreter": {"file_ids": []}},
+    "metadata": {},
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "max_completion_tokens": null,
+    "max_prompt_tokens": null,
+    "truncation_strategy": {"type": "auto", "last_messages": null},
+    "incomplete_details": null,
+    "usage": null,
+    "response_format": {"type": "text"},
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+}
